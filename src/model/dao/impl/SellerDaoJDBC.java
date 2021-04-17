@@ -76,8 +76,9 @@ public class SellerDaoJDBC implements SellerDao {
 
 	/*
 	 * OS MÉTODOS ABAIXO (instantiateSeller e instantiateDepartment) SERVEM COMO
-	 * AUXILIARES PARA QUALQUER MÉTODO DA CLASSE QUE PRECISE INSTANCIAR UM OBJETO SELLER OU DEPARTMENT
-	 * ASSIM ELE NÃO FICA MUITO GRANDE E O MÉTODO QUE O CHAMAR FICA MAIS ORGANIZADO.
+	 * AUXILIARES PARA QUALQUER MÉTODO DA CLASSE QUE PRECISE INSTANCIAR UM OBJETO
+	 * SELLER OU DEPARTMENT ASSIM ELE NÃO FICA MUITO GRANDE E O MÉTODO QUE O CHAMAR
+	 * FICA MAIS ORGANIZADO.
 	 * 
 	 * AS EXCESSÕES QUE PODEM DAR NESSES MÉTODOS ESTÃO SENDO PROPAGADAS PARA QUE
 	 * SEJAM TRATADAS PELO CATCH QUANDO FOREM CHAMADOS NO MÉTODO FindById.
@@ -108,10 +109,51 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public List<Seller> findAll() {
+		/*
+		 * O CÓDIGO DO MÉTODO findAll() É O MESMO USADO NO MÉTODO findByDepartmentId(),
+		 * PORTANTO AS EXPLICAÇÕES DESSA ESTRUTURA JÁ ESTÃO DESCRITAS NESSE MÉTODO, COM
+		 * DIFERENÇA APENAS NA QUERY SQL QUE NÃO TEM A LINHA WHERE ... E A LINHA
+		 * "st.setInt(1, department.getId()) POR NÃO TER NECESSIDADE DE ESPECIFICAR UM
+		 * ID PARA ESSA BUSCA POIS findAll() BUSCA TODOS OS VENDEDORES CADASTRADOS NO
+		 * BANCO.
+		 */
 
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+
+		try {
+
+			st = conn.prepareStatement("SELECT seller.*,department.Name as DepName FROM seller INNER JOIN department "
+					+ "ON seller.DepartmentId = department.Id  ORDER BY Name");
+
+			rs = st.executeQuery();
+
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+
+			while (rs.next()) {
+				Department dep = map.get(rs.getInt("DepartmentId"));
+
+				if (dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(rs.getInt("DepartmentId"), dep);
+				}
+
+				Seller obj = instantiateSeller(rs, dep);
+				list.add(obj);
+			}
+
+			return list;
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+
+		}
 	}
-
 
 	@Override
 	public List<Seller> findByDepartment(Department department) {
@@ -122,54 +164,64 @@ public class SellerDaoJDBC implements SellerDao {
 		try {
 
 			st = conn.prepareStatement("SELECT seller.*,department.Name as DepName FROM seller INNER JOIN department "
-										+ "ON seller.DepartmentId = department.Id WHERE DepartmentId = ? ORDER BY Name");
+					+ "ON seller.DepartmentId = department.Id WHERE DepartmentId = ? ORDER BY Name");
 
 			st.setInt(1, department.getId());
 			rs = st.executeQuery();
-			
+
 			// >>> INICIO ESTRUTURA DE CONTROLE DE REPETIÇÕES DE OBJETOS <<<
-		
+
 			List<Seller> list = new ArrayList<>();
-			//Criando um list de seller para guardar cada seller que faça parte do DepartmentId especificado.
-			
+			// Criando um list de seller para guardar cada seller que faça parte do
+			// DepartmentId especificado.
+
 			Map<Integer, Department> map = new HashMap<>();
-			/*Criando um Map para guardar o Department encontrado e instanciado dentro do while,
-			 * assim fazemos uma estrutura de controle para evitar de se instanciar repetidamente o mesmo 
-			 * objeto do tipo Department, o correto e todos os seller's encontrados na busca apontarem para o mesmo
-			 * objeto do tipo Department.
+			/*
+			 * Criando um Map para guardar o Department encontrado e instanciado dentro do
+			 * while, assim fazemos uma estrutura de controle para evitar de se instanciar
+			 * repetidamente o mesmo objeto do tipo Department, o correto e todos os
+			 * seller's encontrados na busca apontarem para o mesmo objeto do tipo
+			 * Department.
 			 */
 
-			while(rs.next()) {
-				
+			while (rs.next()) {
+
 				Department dep = map.get(rs.getInt("DepartmentId"));
-				/* Fazendo uma busca dentro do map passando como chave o departmentId recebeido pelo ResultSet,
-				 * Caso ainda não exista nenhum Department dentro de map com a chave informada
-				 * o mesmo retornará null e passará esse null para a variável auxiliar dep
-				 * Caso já exista um department dentro do map com a chave recebida a variável dep
-				 * receberá esse objeto.
+				/*
+				 * Fazendo uma busca dentro do map passando como chave o departmentId recebeido
+				 * pelo ResultSet, Caso ainda não exista nenhum Department dentro de map com a
+				 * chave informada o mesmo retornará null e passará esse null para a variável
+				 * auxiliar dep Caso já exista um department dentro do map com a chave recebida
+				 * a variável dep receberá esse objeto.
 				 */
-				
-				if(dep == null) {
+
+				if (dep == null) {
 					dep = instantiateDepartment(rs);
 					map.put(rs.getInt("DepartmentId"), dep);
-				/* Teste com if para o caso de o objeto Department ainda não ter sido instanciado pelo while
-				 * caso a varável dep tenha valor null é executado o método já criado instantiateDepartment(rs) passando o
-				 * ResultSet como argumento. Department já é instanciado dentro desse método.
-				 * 
-				 * Após instanciar o objeto através do método, é adicionado o mesmo dentro do map e assim na próxima vez
-				 * que se repertir o while o map não retornará mais um valor null para a variável dep no código acima do if				 * 
-				 */
+					/*
+					 * Teste com if para o caso de o objeto Department ainda não ter sido
+					 * instanciado pelo while caso a varável dep tenha valor null é executado o
+					 * método já criado instantiateDepartment(rs) passando o ResultSet como
+					 * argumento. Department já é instanciado dentro desse método.
+					 * 
+					 * Após instanciar o objeto através do método, é adicionado o mesmo dentro do
+					 * map e assim na próxima vez que se repertir o while o map não retornará mais
+					 * um valor null para a variável dep no código acima do if *
+					 */
 				}
 
 				Seller obj = instantiateSeller(rs, dep);
 				list.add(obj);
 			}
 			// >>> FIM DA ESTRUTURA DE CONTROLE DE REPETIÇÃO DE OBJETOS <<<
-			
-	/* Toda essa estrutura de códigos acima pode ser usada em outras situações quando for necessário fazer uma busca 
-	 * no banco de dados por um objeto e caso tenha mais de um resultado dessa busca não repetir a instanciação do mesmo
-	 * objeto resultado da busca. */
-			
+
+			/*
+			 * Toda essa estrutura de códigos acima pode ser usada em outras situações
+			 * quando for necessário fazer uma busca no banco de dados por um objeto e caso
+			 * tenha mais de um resultado dessa busca não repetir a instanciação do mesmo
+			 * objeto resultado da busca.
+			 */
+
 			return list;
 
 		} catch (SQLException e) {
