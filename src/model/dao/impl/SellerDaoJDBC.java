@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -22,19 +25,16 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public void insert(Seller obj) {
-		
 
 	}
 
 	@Override
 	public void update(Seller obj) {
-		
 
 	}
 
 	@Override
 	public void deleteById(Integer id) {
-		
 
 	}
 
@@ -55,7 +55,7 @@ public class SellerDaoJDBC implements SellerDao {
 			if (rs.next()) {
 
 				Department dep = instantiateDepartment(rs); // USANDO O MÉTODO AUXILIAR DECLARADO ABAIXO
-				Seller obj = instantiateSeller(rs, dep); // USANDO O MÉTODO AUXILIAR DECLARADO ABAIXO 
+				Seller obj = instantiateSeller(rs, dep); // USANDO O MÉTODO AUXILIAR DECLARADO ABAIXO
 				return obj;
 			}
 			return null;
@@ -67,8 +67,8 @@ public class SellerDaoJDBC implements SellerDao {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
 			/*
-			 * NÃO É PRECISO FECHAR A CONEXÃO COM O BANCO, POIS ESSE DAO PODE SER USADO
-			 * PARA OUTRAS OPERAÇÕES, ENTÃO PODE DEIXAR PARA FECHAR A CONEXÃO NA CLASSE PROGRAM.
+			 * NÃO É PRECISO FECHAR A CONEXÃO COM O BANCO, POIS ESSE DAO PODE SER USADO PARA
+			 * OUTRAS OPERAÇÕES, ENTÃO PODE DEIXAR PARA FECHAR A CONEXÃO NA CLASSE PROGRAM.
 			 */
 		}
 
@@ -79,13 +79,13 @@ public class SellerDaoJDBC implements SellerDao {
 	 * AUXILIARES PARA MELHORAR O CÓDIGO DO MÉTODO FindById, ASSIM ELE NÃO FICA
 	 * MUITO GRANDE E A CLASSE FICA MAIS ORGANIZADA.
 	 * 
-	 * AS EXCESSÕES QUE PODEM DAR NESSES MÉTODOS ESTÃO SENDO PROPAGADAS PARA QUE SEJAM TRATADAS PELO CATCH
-	 * QUANDO FOREM CHAMADOS NO MÉTODO FindById.
+	 * AS EXCESSÕES QUE PODEM DAR NESSES MÉTODOS ESTÃO SENDO PROPAGADAS PARA QUE
+	 * SEJAM TRATADAS PELO CATCH QUANDO FOREM CHAMADOS NO MÉTODO FindById.
 	 * 
-	 * O CÓDIGO DESSES MÉTODOS ESTÃO INSTANCIANDO OS OBJETOS COM OS DADOS RECEBIDOS PELO
-	 * RESULTSET "rs" É NECESSÁRIO FAZER ESSA OPERAÇÃO POIS ESTAMOS PROGRAMANDO NUMA
-	 * LINGUAGEM ORIENTADA A OBJETO ENTÃO DEVE-SE INSTANCIAR OS OBJETOS COM SUAS
-	 * ASSOCIAÇÕES NA MEMÓRIA.
+	 * O CÓDIGO DESSES MÉTODOS ESTÃO INSTANCIANDO OS OBJETOS COM OS DADOS RECEBIDOS
+	 * PELO RESULTSET "rs" É NECESSÁRIO FAZER ESSA OPERAÇÃO POIS ESTAMOS PROGRAMANDO
+	 * NUMA LINGUAGEM ORIENTADA A OBJETO ENTÃO DEVE-SE INSTANCIAR OS OBJETOS COM
+	 * SUAS ASSOCIAÇÕES NA MEMÓRIA.
 	 */
 
 	private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
@@ -108,8 +108,49 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public List<Seller> findAll() {
-		
+
 		return null;
+	}
+
+	@Override
+	public List<Seller> findByDepartment(Department department) {
+
+		PreparedStatement st = null;
+		ResultSet rs = null;
+
+		try {
+
+			st = conn.prepareStatement("SELECT seller.*,department.Name as DepName FROM seller INNER JOIN department "
+										+ "ON seller.DepartmentId = department.Id WHERE DepartmentId = ? ORDER BY Name");
+
+			st.setInt(1, department.getId());
+			rs = st.executeQuery();
+			
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+
+			while(rs.next()) {
+				
+				Department dep = map.get(rs.getInt("DepartmentId"));
+				
+				if(dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(rs.getInt("DepartmentId"), dep);
+				}
+
+				Seller obj = instantiateSeller(rs, dep);
+				list.add(obj);
+			}
+			return list;
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+
+		}
 	}
 
 }
