@@ -95,23 +95,22 @@ public class SellerDaoJDBC implements SellerDao {
 	@Override
 	public void deleteById(Integer id) {
 		PreparedStatement st = null;
-		
+
 		try {
 			st = conn.prepareStatement("DELETE FROM seller WHERE Id = ?");
-			
+
 			st.setInt(1, id);
-			
+
 			int rowsAffected = st.executeUpdate();
-			
-			if(rowsAffected == 0) {
+
+			if (rowsAffected == 0) {
 				throw new DbException("Unexpected error! No rows Affected!");
 			}
-			 
-								
+
 		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
-			
-		}finally {
+
+		} finally {
 			DB.closeStatement(st);
 		}
 
@@ -151,39 +150,6 @@ public class SellerDaoJDBC implements SellerDao {
 			 */
 		}
 
-	}
-
-	/*
-	 * OS MÉTODOS ABAIXO (instantiateSeller e instantiateDepartment) SERVEM COMO
-	 * AUXILIARES PARA QUALQUER MÉTODO DA CLASSE QUE PRECISE INSTANCIAR UM OBJETO
-	 * SELLER OU DEPARTMENT ASSIM ELE NÃO FICA MUITO GRANDE E O MÉTODO QUE O CHAMAR
-	 * FICA MAIS ORGANIZADO.
-	 * 
-	 * AS EXCESSÕES QUE PODEM DAR NESSES MÉTODOS ESTÃO SENDO PROPAGADAS PARA QUE
-	 * SEJAM TRATADAS PELO CATCH QUANDO FOREM CHAMADOS NO MÉTODO FindById.
-	 * 
-	 * O CÓDIGO DESSES MÉTODOS ESTÃO INSTANCIANDO OS OBJETOS COM OS DADOS RECEBIDOS
-	 * PELO RESULTSET "rs" É NECESSÁRIO FAZER ESSA OPERAÇÃO POIS ESTAMOS PROGRAMANDO
-	 * NUMA LINGUAGEM ORIENTADA A OBJETO ENTÃO DEVE-SE INSTANCIAR OS OBJETOS COM
-	 * SUAS ASSOCIAÇÕES NA MEMÓRIA.
-	 */
-
-	private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
-		Seller obj = new Seller();
-		obj.setId(rs.getInt("Id"));
-		obj.setName(rs.getString("Name"));
-		obj.setEmail(rs.getString("Email"));
-		obj.setBaseSalary(rs.getDouble("BaseSalary"));
-		obj.setBirthDate(rs.getDate("BirthDate"));
-		obj.setDepartment(dep);
-		return obj;
-	}
-
-	private Department instantiateDepartment(ResultSet rs) throws SQLException {
-		Department dep = new Department();
-		dep.setId(rs.getInt("DepartmentId"));
-		dep.setName(rs.getString("DepName"));
-		return dep;
 	}
 
 	@Override
@@ -311,6 +277,39 @@ public class SellerDaoJDBC implements SellerDao {
 			DB.closeResultSet(rs);
 
 		}
+	}
+
+	/*
+	 * OS MÉTODOS ABAIXO (instantiateSeller e instantiateDepartment) SERVEM COMO
+	 * AUXILIARES PARA QUALQUER MÉTODO DA CLASSE QUE PRECISE INSTANCIAR UM OBJETO
+	 * SELLER OU DEPARTMENT ASSIM ELE NÃO FICA MUITO GRANDE E O MÉTODO QUE O CHAMAR
+	 * FICA MAIS ORGANIZADO.
+	 * 
+	 * AS EXCESSÕES QUE PODEM DAR NESSES MÉTODOS ESTÃO SENDO PROPAGADAS PARA QUE
+	 * SEJAM TRATADAS PELO CATCH QUANDO FOREM CHAMADOS NO MÉTODO FindById.
+	 * 
+	 * O CÓDIGO DESSES MÉTODOS ESTÃO INSTANCIANDO OS OBJETOS COM OS DADOS RECEBIDOS
+	 * PELO RESULTSET "rs" É NECESSÁRIO FAZER ESSA OPERAÇÃO POIS ESTAMOS PROGRAMANDO
+	 * NUMA LINGUAGEM ORIENTADA A OBJETO ENTÃO DEVE-SE INSTANCIAR OS OBJETOS COM
+	 * SUAS ASSOCIAÇÕES NA MEMÓRIA.
+	 */
+
+	private Seller instantiateSeller(ResultSet rs, Department dep) throws SQLException {
+		Seller obj = new Seller();
+		obj.setId(rs.getInt("Id"));
+		obj.setName(rs.getString("Name"));
+		obj.setEmail(rs.getString("Email"));
+		obj.setBaseSalary(rs.getDouble("BaseSalary"));
+		obj.setBirthDate(rs.getDate("BirthDate"));
+		obj.setDepartment(dep);
+		return obj;
+	}
+
+	private Department instantiateDepartment(ResultSet rs) throws SQLException {
+		Department dep = new Department();
+		dep.setId(rs.getInt("DepartmentId"));
+		dep.setName(rs.getString("DepName"));
+		return dep;
 	}
 
 }
