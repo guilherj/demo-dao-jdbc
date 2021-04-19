@@ -5,9 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.mysql.cj.protocol.Resultset;
 
 import db.DB;
 import db.DbException;
@@ -111,10 +110,44 @@ public class DepartmentDaoJDBC implements DepartmentDao {
 		}
 	}
 
+	
+	/*
+	 * COMO A CLASSE Department NÃO TEM RELAÇÃO COM A CLASSE Seller ENTÃO O CÓDIGO DO MÉTODO findAll()
+	 * DE DepartmentDaoJDBC SE TORNA SIMPLES POIS NÃO SE PRENDE A CONFERIR REPETIÇÃO DE INSTANCIAÇÃO
+	 * DE OBJETOS DE OUTRA CLASSE QUE NÃO SEJA A Department.
+	 * 
+	 * EM SellerDaoJDBC TIVEMOS QUE FAZER ESSA VERIFICAÇÃO POIS A CLASSE Seller TEM RELAÇÃO COM A CLASSE Department
+	 * E POR ISSO AO INSTANCIAR MAIS DE UM OBJETO DO TIPO Seller, OS OBJETOS TIPO Seller DEVERIAM ESTÁR LIGADOS AO MESMO
+	 * Department, NO CASO DE TER MAIS DE UM Seller NO MESMO Department DENTRO DO BANCO.
+	 * 
+	 *  POIS SE NÃO TIVER ESSE CONTROLE, CADA VEZ QUE INSTANCIAR UM Seller IRÁ INSTANCIAR UM NOVO Department DENTRO DO BANCO
+	 *  MESMO QUE TENHA MAIS DE UM Seller NO MESMO Department.
+	 * 
+	 */
 	@Override
 	public List<Department> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+
+		try {
+			st = conn.prepareStatement("SELECT * FROM Department ORDER BY Name");
+
+			rs = st.executeQuery();
+
+			List<Department> list = new ArrayList<>();
+			while (rs.next()) {
+				Department dep = instantiateDepartment(rs);
+				list.add(dep);
+			}
+			return list;
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 
 	/*

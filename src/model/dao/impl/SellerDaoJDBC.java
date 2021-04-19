@@ -258,7 +258,7 @@ public class SellerDaoJDBC implements SellerDao {
 			/*
 			 * Criando um Map para guardar o Department encontrado e instanciado dentro do
 			 * while, assim fazemos uma estrutura de controle para evitar de se instanciar
-			 * repetidamente o mesmo objeto do tipo Department, o correto e todos os
+			 * repetidamente o mesmo objeto do tipo Department, o correto é todos os
 			 * seller's encontrados na busca apontarem para o mesmo objeto do tipo
 			 * Department.
 			 */
