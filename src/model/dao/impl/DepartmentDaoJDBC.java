@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+import com.mysql.cj.protocol.Resultset;
+
 import db.DB;
 import db.DbException;
 import model.dao.DepartmentDao;
@@ -84,14 +86,48 @@ public class DepartmentDaoJDBC implements DepartmentDao {
 
 	@Override
 	public Department findById(Integer id) {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+
+		try {
+
+			st = conn.prepareStatement("SELECT * FROM Department WHERE id = ?");
+
+			st.setInt(1, id);
+			rs = st.executeQuery();
+
+			if (rs.next()) {
+				Department dep = instantiateDepartment(rs);
+				return dep;
+			}
+			return null;
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 
 	@Override
 	public List<Department> findAll() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/*
+	 * MÉTODO AUXILIAR PARA INSTANCIAÇÃO DO OBJETO DEPARTMENT DENTRO DA CLASSE
+	 * DepartmentDaoJDBC, A EXPLICAÇÃO DO PORQUE ESTÁ NA CLASSE SellerDaoJDBC.
+	 */
+
+	private Department instantiateDepartment(ResultSet rs) throws SQLException {
+		Department dep = new Department();
+		dep.setId(rs.getInt("Id"));
+		dep.setName(rs.getString("Name"));
+		return dep;
+
 	}
 
 }

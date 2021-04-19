@@ -17,7 +17,9 @@ public class Program2 {
 		System.out.println("Inserted! Department Id:" + department.getId());
 		*/
 		
-		
+		System.out.println("==== TEST 1: Department findById ====");
+		Department dep = departmentDao.findById(4);
+		System.out.println(dep);
 
 	}
 
